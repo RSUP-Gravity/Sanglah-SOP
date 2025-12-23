@@ -207,14 +207,19 @@
 
     @if(isset($chartData) && (auth()->user()->isSuperAdmin() || auth()->user()->isValidator()))
     <!-- Charts Section -->
+    <!-- Charts Section -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Statistik Status SOP</h3>
-            <canvas id="sopStatusChart"></canvas>
+            <div class="relative h-64 w-full flex justify-center">
+                <canvas id="sopStatusChart"></canvas>
+            </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">SOP per Unit (Top 5)</h3>
-            <canvas id="unitSopsChart"></canvas>
+            <div class="relative h-64 w-full">
+                <canvas id="unitSopsChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -236,6 +241,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             position: 'bottom'
@@ -259,6 +265,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         y: {
                             beginAtZero: true

@@ -1,5 +1,7 @@
 
 
+@extends('layouts.dashboard')
+
 @section('title', 'Manajemen Panduan')
 @section('page-title', 'Panduan Penggunaan')
 
@@ -50,15 +52,22 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="text-sm font-medium text-gray-900">{{ $guide->title }}</div>
-                        <div class="text-sm text-gray-500 line-clamp-2">{{ Str::limit($guide->description, 100) }}</div>
+                        <div class="text-sm text-gray-500 line-clamp-2">{{ Str::limit(strip_tags($guide->description), 100) }}</div>
                         @if($guide->video_url)
                             <a href="{{ $guide->video_url }}" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 block">Lihat Video</a>
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $guide->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                            {{ $guide->is_active ? 'Aktif' : 'Nonaktif' }}
-                        </span>
+                        <button type="button" 
+                                id="toggle-btn-{{ $guide->id }}"
+                                onclick="toggleGuideStatus({{ $guide->id }}, '{{ route('guides.toggle-status', $guide->id) }}')"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 {{ $guide->is_active ? 'bg-green-600' : 'bg-gray-200' }}">
+                            <span class="sr-only">Toggle Status</span>
+                            <span id="toggle-circle-{{ $guide->id }}" 
+                                  aria-hidden="true" 
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $guide->is_active ? 'translate-x-5' : 'translate-x-0' }}">
+                            </span>
+                        </button>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex justify-end gap-2">
@@ -81,7 +90,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                    <td colspan="6" class="px-6 py-10 text-center text-gray-500">
                         Belum ada panduan. Silahkan tambahkan panduan baru.
                     </td>
                 </tr>
@@ -96,3 +105,63 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function toggleGuideStatus(id, url) {
+        const btn = document.getElementById(`toggle-btn-${id}`);
+        const circle = document.getElementById(`toggle-circle-${id}`);
+        
+        // Disable button while processing
+        btn.disabled = true;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(async response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            // Clone response to read text if json fails
+            const clone = response.clone();
+            try {
+                return await response.json();
+            } catch (e) {
+                const text = await clone.text();
+                console.error('Response was not JSON:', text);
+                throw new Error('Server returned invalid JSON');
+            }
+        })
+        .then(data => {
+            if (data.success) {
+                // Update UI based on new status
+                if (data.is_active) {
+                    btn.classList.remove('bg-gray-200');
+                    btn.classList.add('bg-green-600');
+                    circle.classList.remove('translate-x-0');
+                    circle.classList.add('translate-x-5');
+                } else {
+                    btn.classList.remove('bg-green-600');
+                    btn.classList.add('bg-gray-200');
+                    circle.classList.remove('translate-x-5');
+                    circle.classList.add('translate-x-0');
+                }
+            } else {
+                alert('Gagal memperbarui status: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat memperbarui status. Cek console untuk detail.');
+        })
+        .finally(() => {
+            btn.disabled = false;
+        });
+    }
+</script>
+@endpush

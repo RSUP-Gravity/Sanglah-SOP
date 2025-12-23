@@ -44,6 +44,9 @@
         }
     </style>
 
+    <!-- TinyMCE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
     @stack('styles')
 </head>
 <body class="h-full antialiased text-gray-900">

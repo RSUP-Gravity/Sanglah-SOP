@@ -71,6 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
     // Guide Management
+    Route::match(['get', 'post'], '/guides/{guide:id}/toggle-status', [GuideController::class, 'toggleStatus'])->name('guides.toggle-status');
     Route::resource('guides', GuideController::class);
 });
 

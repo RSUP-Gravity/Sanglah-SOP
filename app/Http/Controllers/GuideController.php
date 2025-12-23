@@ -81,6 +81,9 @@ class GuideController extends Controller
             'title' => 'required|string|max:255',
             'chapter' => 'nullable|string|max:255',
             'description' => 'required|string',
+            'sections' => 'nullable|array',
+            'sections.*.title' => 'required|string|max:255',
+            'sections.*.content' => 'nullable|string',
             'image' => 'nullable|image|max:2048', // 2MB Max
             'video_url' => 'nullable|url',
             'sort_order' => 'integer',
@@ -90,6 +93,9 @@ class GuideController extends Controller
         $data['is_active'] = $request->has('is_active');
         $data['slug'] = \Illuminate\Support\Str::slug($request->title);
         $data['chapter'] = $request->filled('chapter') ? $request->chapter : 'Umum';
+        
+        // Ensure sections is null or array
+        $data['sections'] = $request->input('sections', null);
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('guides', 'public');
@@ -129,6 +135,9 @@ class GuideController extends Controller
             'title' => 'required|string|max:255',
             'chapter' => 'nullable|string|max:255',
             'description' => 'required|string',
+            'sections' => 'nullable|array',
+            'sections.*.title' => 'required|string|max:255',
+            'sections.*.content' => 'nullable|string',
             'image' => 'nullable|image|max:2048',
             'video_url' => 'nullable|url',
             'sort_order' => 'integer',
@@ -137,6 +146,7 @@ class GuideController extends Controller
         $data = $request->except('image');
         $data['is_active'] = $request->has('is_active');
         $data['chapter'] = $request->filled('chapter') ? $request->chapter : 'Umum';
+        $data['sections'] = $request->input('sections', null); // Allow clearing sections
         
         // Update slug if title changed
         if ($guide->title !== $request->title) {
@@ -172,5 +182,29 @@ class GuideController extends Controller
         $guide->delete();
 
         return redirect()->route('guides.index')->with('success', 'Panduan berhasil dihapus.');
+    }
+    public function toggleStatus(Guide $guide)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Handle GET request gracefully
+        if (request()->isMethod('get')) {
+            return redirect()->back()->with('error', 'Metode tidak diizinkan. Silakan gunakan tombol yang tersedia.');
+        }
+
+        $guide->is_active = !$guide->is_active;
+        $guide->save();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status panduan berhasil diperbarui.',
+                'is_active' => $guide->is_active
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Status panduan berhasil diperbarui.');
     }
 }

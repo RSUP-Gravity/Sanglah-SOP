@@ -13,6 +13,7 @@ class Guide extends Model
         'title',
         'slug',
         'description',
+        'sections',
         'image_path',
         'video_url',
         'chapter',
@@ -22,6 +23,7 @@ class Guide extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'sections' => 'array',
     ];
 
     protected static function boot()
