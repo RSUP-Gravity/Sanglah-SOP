@@ -1,0 +1,6 @@
+Role	Email	Password
+Super Admin	admin@sanglah.go.id	password
+Validator IGD	validator.igd@sanglah.go.id	password
+Validator Rawat Inap	validator.ranap@sanglah.go.id	password
+User IGD	pegawai.igd@sanglah.go.id	password
+User Rawat Inap	pegawai.ranap@sanglah.go.id	password
