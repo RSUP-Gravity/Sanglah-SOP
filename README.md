@@ -181,31 +181,6 @@ SANGLAH-SOP/
 │   └── app/public/sops/     # Upload SOP files
 └── .env                     # Environment config (MySQL)
 ```
-
-## 🎯 Status Project
-
-### ✅ Completed
-- [x] Laravel 12 project setup
-- [x] Database structure & migrations
-- [x] Database seeders (roles, units, users)
-- [x] Environment configuration (.env)
-- [x] Documentation (README, guides, workflow)
-- [x] Git configuration
-
-### ⏳ In Progress / Planned
-- [ ] Laravel Breeze authentication
-- [ ] Eloquent models & relationships
-- [ ] Controllers & routes
-- [ ] Blade templates & UI
-- [ ] SOP CRUD functionality
-- [ ] Validation workflow
-- [ ] Notification system
-- [ ] File upload & management
-- [ ] Activity logging
-- [ ] User management (admin)
-- [ ] Search & filter
-- [ ] Dashboard & statistics
-
 ## 🔨 Development
 
 ### Mode Development
@@ -289,8 +264,7 @@ Sistem ini dikembangkan untuk Rumah Sakit Sanglah. © 2025 RS Sanglah.
 
 Untuk pertanyaan, dukungan teknis, atau feedback:
 - **Tim IT Rumah Sakit Sanglah**
-- **Email**: it@sanglah.go.id
 
 ---
 
-**Dibuat dengan ❤️ untuk Rumah Sakit Sanglah**
+**Dibuat oleh IT Sanglah**
