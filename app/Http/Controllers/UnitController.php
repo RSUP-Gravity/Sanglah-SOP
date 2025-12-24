@@ -26,6 +26,8 @@ class UnitController extends Controller
         return view('units.index', compact('units', 'direktorats'));
     }
 
+    // --- Unit Methods ---
+
     public function store(Request $request)
     {
         $request->validate([
@@ -68,5 +70,47 @@ class UnitController extends Controller
 
         $unit->delete();
         return redirect()->back()->with('success', 'Unit kerja berhasil dihapus.');
+    }
+
+    // --- Direktorat / Department Methods ---
+
+    public function storeDirektorat(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:direktorats',
+            'is_active' => 'boolean'
+        ]);
+
+        Direktorat::create([
+            'name' => $request->name,
+            'is_active' => $request->has('is_active')
+        ]);
+
+        return redirect()->back()->with('success', 'Departemen berhasil ditambahkan.');
+    }
+
+    public function updateDirektorat(Request $request, Direktorat $direktorat)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:direktorats,name,' . $direktorat->id,
+            'is_active' => 'boolean'
+        ]);
+
+        $direktorat->update([
+            'name' => $request->name,
+            'is_active' => $request->has('is_active')
+        ]);
+
+        return redirect()->back()->with('success', 'Departemen berhasil diperbarui.');
+    }
+
+    public function destroyDirektorat(Direktorat $direktorat)
+    {
+        if ($direktorat->units()->count() > 0) {
+            return redirect()->back()->with('error', 'Tidak dapat menghapus departemen yang memiliki unit kerja.');
+        }
+
+        $direktorat->delete();
+        return redirect()->back()->with('success', 'Departemen berhasil dihapus.');
     }
 }

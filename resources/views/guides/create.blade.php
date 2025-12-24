@@ -81,7 +81,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Konten Bagian</label>
-                                    <textarea :name="'sections['+index+'][content]'" x-model="section.content" rows="4" placeholder="Tuliskan detail poin ini..." 
+                                    <textarea :id="'section-content-' + section.id" :name="'sections['+index+'][content]'" x-init="initEditor(section.id)" rows="4" placeholder="Tuliskan detail poin ini..." 
                                         class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500 text-sm"></textarea>
                                 </div>
                             </div>
@@ -95,24 +95,6 @@
                         </button>
                     </div>
                 </div>
-
-                <script>
-                    function sectionManager() {
-                        return {
-                            sections: [],
-                            addSection() {
-                                this.sections.push({
-                                    id: Date.now(),
-                                    title: '',
-                                    content: ''
-                                });
-                            },
-                            removeSection(index) {
-                                this.sections.splice(index, 1);
-                            }
-                        }
-                    }
-                </script>
 
                 <!-- Image -->
                 <div>
@@ -166,6 +148,48 @@
 
 @push('scripts')
 <script>
+    function sectionManager(initialData) {
+        return {
+            sections: initialData || [],
+            addSection() {
+                this.sections.push({
+                    id: Date.now(),
+                    title: '',
+                    content: ''
+                });
+            },
+            removeSection(index) {
+                const sectionId = this.sections[index].id;
+                if (typeof tinymce !== 'undefined' && tinymce.get('section-content-' + sectionId)) {
+                    tinymce.remove('#section-content-' + sectionId);
+                }
+                this.sections.splice(index, 1);
+            },
+            initEditor(sectionId) {
+                const self = this;
+                setTimeout(() => {
+                    tinymce.init({
+                        selector: '#section-content-' + sectionId,
+                        height: 300,
+                        menubar: true,
+                        plugins: [
+                            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                            'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                        ],
+                        toolbar: 'undo redo | blocks | ' +
+                            'bold italic forecolor backcolor | alignleft aligncenter ' +
+                            'alignright alignjustify | bullist numlist outdent indent | ' +
+                            'removeformat | help',
+                        content_style: 'body { font-family:Plus Jakarta Sans,sans-serif; font-size:14px }',
+                        branding: false,
+                        promotion: false
+                    });
+                }, 50);
+            }
+        }
+    }
+
     tinymce.init({
         selector: '#description',
         height: 500,

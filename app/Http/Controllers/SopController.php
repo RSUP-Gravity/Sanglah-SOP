@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sop;
 use App\Models\Unit;
+use App\Models\Direktorat;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,16 +37,23 @@ class SopController extends Controller
 
         // Unit filter
         if ($request->filled('unit_id')) {
-            $query->where('unit_id', $request->unit_id);
+            // Filter SOPs that are applicable to this unit via pivot table
+            $query->whereHas('units', function ($q) use ($request) {
+                $q->where('units.id', $request->unit_id);
+            });
         }
 
         // Role-based filtering
         $user = Auth::user();
         if ($user->isUser()) {
             // Regular users only see their own SOPs
+            // OR users could see SOPs applicable to their unit? 
+            // Usually regular users can read all, but manage only theirs.
+            // Let's stick to existing logic: see own SOPs in management list
             $query->where('created_by', $user->id);
         } elseif ($user->isValidator()) {
             // Validators see SOPs from their unit or all pending validations
+            // Assuming validator unit is the owner unit context, or we check if validator's unit is in applicable units
             $query->where(function($q) use ($user) {
                 $q->where('unit_id', $user->unit_id)
                   ->orWhere('status', 'pending_validation');
@@ -63,8 +71,11 @@ class SopController extends Controller
      */
     public function create()
     {
-        $units = Unit::all();
-        return view('sops.create', compact('units'));
+        // Pass units and direktorats to the view
+        $units = Unit::where('is_active', true)->get();
+        $direktorats = Direktorat::with(['activeUnits'])->where('is_active', true)->get();
+        
+        return view('sops.create', compact('units', 'direktorats'));
     }
 
     /**
@@ -73,7 +84,8 @@ class SopController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'unit_id' => 'required|exists:units,id',
+            'unit_ids' => 'required|array|min:1',
+            'unit_ids.*' => 'exists:units,id',
             'title' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:sops,code',
             'category' => 'required|string|max:100',
@@ -98,8 +110,16 @@ class SopController extends Controller
         $validated['updated_by'] = Auth::id();
         $validated['status'] = 'draft';
         $validated['version'] = '1.0';
+        
+        // Determine primary owner unit -> Use user's unit or the first selected unit
+        // If user has unit_id, use that as owner. Else use first from selection.
+        $ownerUnitId = Auth::user()->unit_id ?? $request->unit_ids[0];
+        $validated['unit_id'] = $ownerUnitId; 
 
         $sop = Sop::create($validated);
+        
+        // Attach applicable units
+        $sop->units()->attach($request->unit_ids);
 
         // Log activity
         ActivityLog::create([
@@ -121,7 +141,7 @@ class SopController extends Controller
      */
     public function show(Sop $sop)
     {
-        $sop->load(['unit', 'creator', 'updater', 'versions', 'validations.validator']);
+        $sop->load(['unit', 'creator', 'updater', 'versions', 'validations.validator', 'units']);
 
         return view('sops.show', compact('sop'));
     }
@@ -136,8 +156,14 @@ class SopController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $units = Unit::all();
-        return view('sops.edit', compact('sop', 'units'));
+        $units = Unit::where('is_active', true)->get();
+        // Just send all units for now, or fetch directory structure if you want same UI in edit
+        // Assuming edit uses plain list or similar. Let's make edit consistent if possible or minimal edit.
+        // User requested creation flow specifically. But good to be consistent.
+        // Let's pass $direktorats too.
+        $direktorats = Direktorat::with(['activeUnits'])->where('is_active', true)->get();
+        
+        return view('sops.edit', compact('sop', 'units', 'direktorats'));
     }
 
     /**
@@ -151,7 +177,8 @@ class SopController extends Controller
         }
 
         $validated = $request->validate([
-            'unit_id' => 'required|exists:units,id',
+            'unit_ids' => 'required|array|min:1',
+            'unit_ids.*' => 'exists:units,id',
             'title' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:sops,code,' . $sop->id,
             'category' => 'required|string|max:100',
@@ -181,6 +208,9 @@ class SopController extends Controller
 
         $oldValues = $sop->toArray();
         $sop->update($validated);
+        
+        // Sync units
+        $sop->units()->sync($request->unit_ids);
 
         // Log activity
         ActivityLog::create([

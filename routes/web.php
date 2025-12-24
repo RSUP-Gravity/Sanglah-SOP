@@ -54,6 +54,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Unit Management Route (Admin only)
     Route::resource('units', UnitController::class);
     
+    // Direktorat Management
+    Route::post('/direktorats', [UnitController::class, 'storeDirektorat'])->name('direktorats.store');
+    Route::put('/direktorats/{direktorat}', [UnitController::class, 'updateDirektorat'])->name('direktorats.update');
+    Route::delete('/direktorats/{direktorat}', [UnitController::class, 'destroyDirektorat'])->name('direktorats.destroy');
+    
     // Notification Routes
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/unread', [NotificationController::class, 'unread'])->name('notifications.unread');

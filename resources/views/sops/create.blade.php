@@ -21,21 +21,52 @@
         <form action="{{ route('sops.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
-            <!-- Unit -->
-            <div class="mb-6">
-                <label for="unit_id" class="block text-sm font-medium text-gray-700 mb-2">
-                    Unit/Bagian <span class="text-red-500">*</span>
+            <!-- Unit Selection (Multi-Select) -->
+            <div class="mb-6" x-data="{
+                selectedUnits: [],
+                allUnitIds: {{ $units->pluck('id')->toJson() }},
+                toggleAll() {
+                    if (this.selectedUnits.length === this.allUnitIds.length) {
+                        this.selectedUnits = [];
+                    } else {
+                        this.selectedUnits = this.allUnitIds;
+                    }
+                },
+                isAllSelected() {
+                    return this.selectedUnits.length === this.allUnitIds.length && this.allUnitIds.length > 0;
+                }
+            }">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Unit Kerja / Bagian (Berlaku Untuk) <span class="text-red-500">*</span>
                 </label>
-                <select name="unit_id" id="unit_id" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent @error('unit_id') border-red-500 @enderror">
-                    <option value="">Pilih Unit</option>
-                    @foreach($units as $unit)
-                        <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
-                            {{ $unit->name }}
-                        </option>
+                
+                <div class="border border-gray-300 rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <!-- Select All Option -->
+                    <div class="mb-4 pb-4 border-b border-gray-200">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" @click="toggleAll()" :checked="isAllSelected()"
+                                class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50">
+                            <span class="ml-2 font-semibold text-gray-900">Pilih Semua Unit (Berlaku untuk Seluruh RS)</span>
+                        </label>
+                    </div>
+
+                    @foreach($direktorats as $direktorat)
+                        <div class="mb-4 last:mb-0">
+                            <h4 class="font-semibold text-gray-700 mb-2">{{ $direktorat->name }}</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 ml-4">
+                                @foreach($direktorat->activeUnits as $unit)
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" name="unit_ids[]" value="{{ $unit->id }}" x-model="selectedUnits"
+                                            class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50">
+                                        <span class="ml-2 text-sm text-gray-600">{{ $unit->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
                     @endforeach
-                </select>
-                @error('unit_id')
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Pilih satu atau lebih unit kerja dimana SOP ini berlaku.</p>
+                @error('unit_ids')
                     <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                 @enderror
             </div>
